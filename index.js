@@ -3,6 +3,19 @@ function randomInt(min, max) {
     return Math.floor(Math.random() * (max - min)) + min;
 }
 
+function range(start, end, step = 1) {
+    if (end === undefined) {
+        end = start;
+        start = 0;
+    }
+    let list = [];
+    while (start < end) {
+        list.push(start);
+        start += step;
+    }
+    return list;
+}
+
 class DrunkenBird {
     // 这个喝醉的鸟在w维空间里,而它的家在w维坐标系中的homePos里
     constructor(w, homePos, allowNegativePos = true) {
@@ -24,6 +37,8 @@ class DrunkenBird {
             this.birdPos.push(0);
             this.steps[0].birdPos.push(0);
         }
+
+        this.steps[0].inHome = this.checkIfHome();
     }
     // 相对更改鸟的坐标
     moveBirdRelatively({ step = this.total, id, dis }) {
@@ -38,14 +53,14 @@ class DrunkenBird {
         }
 
         // 更新步数
-        this.steps[step] = { id, dis, birdPos: [] };
+        this.steps[step] = { id, dis, birdPos: [], inHome: this.checkIfHome() };
         // 不直接赋值避免浅复制
         for (let i = 0; i < this.w; i++) {
             this.steps[step].birdPos[i] = this.birdPos[i];
         }
 
         // 返回是否到家
-        return this.checkIfHome();
+        return this.steps[step].inHome;
     }
     // 随机移动 times 步
     randomMove(times) {
@@ -56,7 +71,7 @@ class DrunkenBird {
                 break;
             }
         }
-        return this.checkIfHome();
+        return this.steps[this.total - 1].inHome;
     }
     // 检测是否到家
     checkIfHome() {
@@ -76,6 +91,19 @@ class DrunkenBird {
 let started = false;
 
 let page = {
+    init() {
+        page.table = $("#steps").DataTable();
+
+        // 基于准备好的dom，初始化echarts实例
+        page.chart = echarts.init($("#chart").get(0));
+
+        // 自动改变大小
+        $(window).resize(function () {
+            page.chart.resize();
+        });
+
+        $("#start").click(page.start);
+    },
     start() {
         try {
             if (started) {
@@ -111,7 +139,6 @@ let page = {
             };
 
             option.series.push({
-                // type: "effectScatter",
                 type: "scatter",
                 symbol: "path://M5.026 15c6.038 0 9.341-5.003 9.341-9.334 0-.14 0-.282-.006-.422A6.685 6.685 0 0 0 16 3.542a6.658 6.658 0 0 1-1.889.518 3.301 3.301 0 0 0 1.447-1.817 6.533 6.533 0 0 1-2.087.793A3.286 3.286 0 0 0 7.875 6.03a9.325 9.325 0 0 1-6.767-3.429 3.289 3.289 0 0 0 1.018 4.382A3.323 3.323 0 0 1 .64 6.575v.045a3.288 3.288 0 0 0 2.632 3.218 3.203 3.203 0 0 1-.865.115 3.23 3.23 0 0 1-.614-.057 3.283 3.283 0 0 0 3.067 2.277A6.588 6.588 0 0 1 .78 13.58a6.32 6.32 0 0 1-.78-.045A9.344 9.344 0 0 0 5.026 15z",
                 symbolSize: 16,
@@ -126,7 +153,6 @@ let page = {
                 ],
                 clip: false
             }, {
-                // type: "effectScatter",
                 type: "scatter",
                 symbol: "path://M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L2 8.207V13.5A1.5 1.5 0 0 0 3.5 15h9a1.5 1.5 0 0 0 1.5-1.5V8.207l.646.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.707 1.5ZM13 7.207l-5-5-5 5V13.5a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5V7.207Z",
                 symbolSize: 16,
@@ -143,7 +169,7 @@ let page = {
             });
 
             // 绘制图表
-            chart.setOption(option);
+            page.chart.setOption(option);
 
             page.showList();
         } catch (error) {
@@ -153,21 +179,27 @@ let page = {
         };
     },
     showList() {
-        let lis = page.bird.steps.map(function ({id, dis, birdPos}) {
-            let li = $(`<li class="list-group-item"></li>`);
-            li.text(`维度 ${id} 移动 ${dis} 格`);
-            return li;
+        page.table.destroy();
+        $("#stepsHead").html(
+            $(`<tr></tr>`).append(
+                `<th>步骤</th>
+                <th>维度</th>
+                <th>距离</th>`,
+                range(page.bird.w).map(value => $(`<th></th>`).text("维度 " + value)),
+                `<th>在家</th>`
+            )
+        );
+        page.table = $("#steps").DataTable({
+            data: page.bird.steps.map(function ({ id, dis, birdPos, inHome }, index) {
+                let list = [index, id, dis];
+                for (let i in birdPos) {
+                    list.push(birdPos[i]);
+                }
+                list.push(inHome);
+                return list;
+            })
         });
-        $("#steps").html(lis);
     }
 };
 
-$("#start").click(page.start);
-
-// 基于准备好的dom，初始化echarts实例
-var chart = echarts.init($("#chart").get(0));
-
-// 自动改变大小
-$(window).resize(function () {
-    chart.resize();
-});
+page.init();

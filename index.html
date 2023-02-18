@@ -48,7 +48,7 @@
         }
 
         #chart {
-            position: sticky;
+            position: sticky !important;
             top: 0;
         }
 
@@ -57,6 +57,14 @@
             top: 0;
             z-index: 100;
             backdrop-filter: blur(5px);
+        }
+
+        #steps > * > tr > * {
+            border-left: 1px gray solid;
+        }
+
+        #steps > * > tr > *:nth-last-child(1) {
+            border-right: 1px gray solid;
         }
     </style>
 </head>
@@ -90,14 +98,24 @@
                 <button type="button" class="btn btn-secondary float-end">空按钮</button>
             </div>
             <hr />
-            <span>步骤:</span>
-            <ul class="container-fluid list-group" id="steps">
-            </ul>
+            <table class="container-fluid table table-striped" id="steps">
+                <thead id="stepsHead">
+                    <tr>
+                        <th>步骤</th>
+                        <th>维度</th>
+                        <th>距离</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
         </div>
     </div>
     <script src="script/jquery-3.6.3.js"></script>
     <script src="script/bootstrap.bundle.js"></script>
     <script src="script/echarts.js"></script>
+    <script src="datatables/datatables.js"></script>
+    <link rel="stylesheet" href="datatables/datatables.css" />
     <script src="index.js"></script>
 </body>
 
