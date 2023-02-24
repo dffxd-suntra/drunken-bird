@@ -1,6 +1,10 @@
 // 包含min，不包含max
-function randomInt(min, max) {
-    return Math.floor(Math.random() * (max - min)) + min;
+// precision: 精度,0为整数,1为一位小数,以此类推
+function randomInt(min, max, precision = 0) {
+    precision = Decimal.pow(10, precision);
+    min = Decimal.mul(min, precision);
+    max = Decimal.mul(max, precision);
+    return Decimal.floor(Decimal.random() * new Decimal(max).minus(min)).add(min).div(precision);
 }
 
 function range(start, end, step = 1) {
@@ -14,6 +18,13 @@ function range(start, end, step = 1) {
         start += step;
     }
     return list;
+}
+
+function sjd(x, y, angle, bevel) {
+    let rd = Decimal.mul(angle, Math.PI).div(180);
+    let xm = Decimal.cos(rd).add(bevel);
+    let ym = Decimal.sin(rd).add(bevel);
+    return { x: Decimal.add(x, xm), y: Decimal.add(y, ym) };
 }
 
 class DrunkenBird {
@@ -33,7 +44,7 @@ class DrunkenBird {
         this.total = 1;
 
         // 初始化维度
-        for (let i = 0; i < this.w; i++) {
+        for (let i in range(this.w)) {
             this.birdPos.push(0);
             this.steps[0].birdPos.push(0);
         }
@@ -203,3 +214,8 @@ let page = {
 };
 
 page.init();
+
+Decimal.set({
+    precision: 1000,
+    defaults: true
+})
